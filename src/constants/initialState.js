@@ -42,7 +42,7 @@ export const settings = {
     cdiscLibrary: {
         apiKey: '',
         checkForCLUpdates: true,
-        baseUrl: 'https://library.cdisc.org/api',
+        baseUrl: 'https://defineeditor.com:4600/api',
         itemGroupsGridView: true,
         itemsShowSetSubheader: false,
     },

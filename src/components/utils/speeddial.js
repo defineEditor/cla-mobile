@@ -65,9 +65,9 @@ export default function SpeedDials () {
     };
 
     const actions = [
-        { icon: <SaveIcon />, name: 'Save', onClick: save },
         { icon: <HomeIcon />, name: 'Home', onClick: goHome },
         { icon: <Settings />, name: 'Settings', onClick: goSettings },
+        { icon: <SaveIcon />, name: 'Save', onClick: save },
         { icon: <ChevronRight />, name: 'Redo', onClick: redo, disabled: futureLength === 0 },
         { icon: <ChevronLeft />, name: 'Undo', onClick: undo, disabled: pastLength === 0 },
     ];

@@ -27,6 +27,7 @@ const getStyles = makeStyles(theme => ({
     main: {
         paddingLeft: 0,
         paddingRight: 0,
+        marginBottom: theme.spacing(6),
         outline: 'none',
     },
     addItem: {
@@ -77,6 +78,10 @@ const Products = () => {
         const productClasses = await cdiscLibrary.getProductClasses();
         const allProducts = {};
         const panelIds = Object.keys(productClasses);
+        if (panelIds.length === 0) {
+            // Products were not loaded
+            return;
+        }
         let result = {};
         if (productType === 'standards') {
             panelIds

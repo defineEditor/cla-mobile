@@ -84,7 +84,7 @@ const SettingTabs = (props) => {
                     scrollButtons='auto'
                 >
                     <Tab label='Library' />
-                    <Tab label='CT' />
+                    <Tab label='CT' disabled />
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0} classes={classes}>

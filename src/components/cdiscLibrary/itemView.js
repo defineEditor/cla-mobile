@@ -381,7 +381,7 @@ const ItemView = (props) => {
             {props.type === 'codedValue' && CodedValueView()}
             {props.type === 'codeList' && CodeListView()}
             {props.type === 'field' && FieldView()}
-            {props.type === 'variableView' && VariableView()}
+            {props.type === 'variable' && VariableView()}
         </Grid>
     );
 };

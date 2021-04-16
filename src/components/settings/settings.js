@@ -6,6 +6,7 @@ import { CdiscLibraryContext } from '../../constants/contexts.js';
 import { initCdiscLibrary, updateCdiscLibrarySettings } from '../../utils/cdiscLibraryUtils.js';
 import { updateSettings } from '../../redux/slices/settings.js';
 import { openSnackbar, openModal } from '../../redux/slices/ui.js';
+import saveState from '../../utils/saveState.js';
 
 const Settings = (props) => {
     const dispatch = useDispatch();
@@ -57,6 +58,7 @@ const Settings = (props) => {
     };
 
     const save = () => {
+        saveState();
         const diff = getSettingsDiff();
         if (Object.keys(diff).length > 0) {
             if (diff.cdiscLibrary) {

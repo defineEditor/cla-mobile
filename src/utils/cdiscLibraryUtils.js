@@ -97,40 +97,18 @@ export const initCdiscLibrary = (settings) => {
     const options = {
         baseUrl: claSettings.baseUrl,
         cache: { match: claMatch, put: claPut },
+        apiKey: claSettings.apiKey,
     };
-    if (claSettings.oAuth2 === true) {
-        options.apiKey = claSettings.apiKey;
-    } else {
-        options.username = claSettings.username;
-        options.password = claSettings.password;
-    }
     return new CdiscLibrary(options);
 };
 
 export const updateCdiscLibrarySettings = (settingsDiff, originalSettings, cdiscLibraryContext) => {
     // Encrypt the cdiscLibrary password/apiKey
     const diff = clone(settingsDiff);
-    // Enable/Disable the CDISC Library
-    if (diff.enableCdiscLibrary === true) {
+    // If the credentials/baseUrl was changed, use the new
+    if (diff.apiKey !== undefined || diff.baseUrl !== undefined) {
         const settings = { ...originalSettings, ...diff };
         cdiscLibraryContext.setCdiscLibrary(initCdiscLibrary(settings));
-    } else if (diff.enableCdiscLibrary === false) {
-        cdiscLibraryContext.setCdiscLibrary({});
-    } else if (originalSettings.enableCdiscLibrary === true) {
-        // If the credentials were changed, use the new
-        const coreObject = cdiscLibraryContext.cdiscLibrary.coreObject;
-        if (diff.username !== undefined) {
-            coreObject.username = diff.username;
-        }
-        if (diff.password !== undefined) {
-            coreObject.password = diff.password;
-        }
-        if (diff.apiKey !== undefined) {
-            coreObject.apiKey = diff.apiKey;
-        }
-        if (diff.baseUrl !== undefined) {
-            coreObject.baseUrl = diff.baseUrl;
-        }
     }
     // Returns settings with encrypted password/apiKey if it was in diff
     return diff;

@@ -30,6 +30,10 @@ export const uiMainSlice = createSlice({
         changeBack: (state) => {
             const page = state.main.page;
             const newState = { ...state, main: { ...state.main } };
+            if (page !== 'products') {
+                // Add dummy history, so that back button does not exit the application
+                window.history.pushState({}, '');
+            }
             if ((page) === 'items') {
                 newState.main.page = 'itemGroups';
             } else if (page === 'codedValues') {

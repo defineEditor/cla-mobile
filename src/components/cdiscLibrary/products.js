@@ -68,6 +68,7 @@ const getStyles = makeStyles(theme => ({
 
 const Products = () => {
     const [productClasses, setProductClasses] = useState({});
+    const [showAll, setShowAll] = useState({});
     const dispatch = useDispatch();
     const cdiscLibrary = useContext(CdiscLibraryContext).cdiscLibrary;
     const { filterString, setFilterString } = useContext(FilterContext);
@@ -211,18 +212,28 @@ const Products = () => {
 
     const getProducts = (data, groupId, classes) => {
         // Sort codelists
-        const dataArray = productType === 'standards' ? Object.keys(data) : Object.keys(data).reverse();
+        let dataArray = productType === 'standards' ? Object.keys(data) : Object.keys(data).reverse();
         const buttonClass = groupId === 'recent' && productType === 'terminology' ? classes.smallTextButton : classes.button;
         // ADaM 2.1 is intentionally hidden as it is blank
+        dataArray = dataArray.filter(id => id !== 'adam-2-1');
+        // Apply filter
+        dataArray = dataArray.filter(id => {
+            if (filterString !== '') {
+                return data[id].title.toLowerCase().includes(filterString.toLowerCase());
+            } else {
+                return true;
+            }
+        });
+
+        // Limit the number of CTs shown
+        let addMoreButton = false;
+        if (productType === 'terminology' && showAll[groupId] === undefined && dataArray.length > 6) {
+            dataArray = dataArray.slice(0, 5);
+            addMoreButton = true;
+        }
+
         const result = dataArray
             .filter(id => id !== 'adam-2-1')
-            .filter(id => {
-                if (filterString !== '') {
-                    return data[id].title.toLowerCase().includes(filterString.toLowerCase());
-                } else {
-                    return true;
-                }
-            })
             .map(id => {
                 return (
                     <Grid key={id} item className={classes.buttonGrid}>
@@ -237,6 +248,22 @@ const Products = () => {
                     </Grid>
                 );
             });
+
+        // Add showAll button
+        if (addMoreButton) {
+            result.push(
+                <Grid key='more' item className={classes.buttonGrid}>
+                    <Fab
+                        variant='extended'
+                        color='default'
+                        onClick={() => setShowAll({ ...showAll, [groupId]: true })}
+                        className={buttonClass}
+                    >
+                        More
+                    </Fab>
+                </Grid>
+            );
+        }
         return (result);
     };
 

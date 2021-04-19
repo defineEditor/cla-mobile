@@ -163,9 +163,9 @@ const Products = () => {
     const selectProduct = (productId, productName) => () => {
         setFilterString('');
         if (productType === 'standards') {
-            dispatch(changePage({ page: 'itemGroups', productId }));
+            dispatch(changePage({ page: 'itemGroups', productId, label: productName }));
         } else if (productType === 'terminology') {
-            dispatch(changePage({ page: 'codeLists', productId }));
+            dispatch(changePage({ page: 'codeLists', productId, label: productName }));
         }
     };
 

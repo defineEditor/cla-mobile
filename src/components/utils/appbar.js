@@ -1,8 +1,9 @@
 import React, { useContext, useRef } from 'react';
 import { fade, makeStyles } from '@material-ui/core/styles';
-import { useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/FindInPage';
@@ -16,14 +17,9 @@ const useStyles = makeStyles((theme) => ({
     grow: {
         flexGrow: 0,
     },
-    menuButton: {
-        marginRight: theme.spacing(2),
-    },
-    title: {
-        display: 'none',
-        [theme.breakpoints.up('sm')]: {
-            display: 'block',
-        },
+    label: {
+        color: '#FFFFFF',
+        marginLeft: theme.spacing(1),
     },
     backIcon: {
         marginLeft: theme.spacing(0),
@@ -70,6 +66,7 @@ export default function TopBar (props) {
     const classes = useStyles();
     const dispatch = useDispatch();
     const { filterString, setFilterString } = useContext(FilterContext);
+    const label = useSelector(state => state.present.ui[state.present.ui.main.page].label);
     const inputRef = useRef(null);
 
     const handleChange = (event) => {
@@ -121,6 +118,9 @@ export default function TopBar (props) {
                             <FilterList className={classes.backArrow}/>
                         </IconButton>
                     )}
+                    <Typography variant='h6' color='textPrimary' className={classes.label}>
+                        {label}
+                    </Typography>
                 </Toolbar>
             </AppBar>
         </div>

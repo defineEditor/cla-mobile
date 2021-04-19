@@ -135,7 +135,6 @@ const Library = (props) => {
                                 onChange={props.handleChange('cdiscLibrary', 'itemGroupsGridView')}
                                 color='primary'
                                 className={classes.switch}
-                                disabled
                             />
                         }
                         label='Grid view'

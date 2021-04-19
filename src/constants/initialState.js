@@ -11,10 +11,12 @@ const uiProducts = {
 const uiItemGroups = {
     gridView: true,
     productId: '',
+    label: '',
 };
 
 const uiItems = {
     itemGroupId: '',
+    label: '',
     itemType: '',
 };
 

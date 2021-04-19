@@ -302,6 +302,45 @@ const ItemView = (props) => {
         );
     };
 
+    const ItemGroupView = () => {
+        return (
+            <React.Fragment>
+                <Grid item>
+                    <Typography className={classes.label} color="textSecondary">
+                        {item.label}
+                    </Typography>
+                </Grid>
+                <Grid item container justify='flex-start' alignItems='flex-end' wrap='nowrap'>
+                    <Grid item className={classes.nameItem}>
+                        <Typography variant="h4" className={classes.name}>
+                            {item.name}
+                        </Typography>
+                    </Grid>
+                    <Grid item container justify='space-evenly'>
+                        <Grid item>
+                            <Typography className={classes.subheader} color="textSecondary">
+                                Number of Items
+                            </Typography>
+                            <Typography variant="body1">
+                                {item.itemNum}
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </Grid>
+                {item.description !== undefined && (
+                    <Grid item>
+                        <Typography className={classes.subheader} color="textSecondary">
+                            Description
+                        </Typography>
+                        <Typography variant="body1">
+                            {item.description}
+                        </Typography>
+                    </Grid>
+                )}
+            </React.Fragment>
+        );
+    };
+
     const CodeListView = () => {
         return (
             <React.Fragment>
@@ -382,6 +421,7 @@ const ItemView = (props) => {
             {props.type === 'codeList' && CodeListView()}
             {props.type === 'field' && FieldView()}
             {props.type === 'variable' && VariableView()}
+            {props.type === 'itemGroup' && ItemGroupView()}
         </Grid>
     );
 };

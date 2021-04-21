@@ -2,12 +2,12 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDB } from 'idb';
 import Jszip from 'jszip';
+import { FixedSizeList } from 'react-window';
 import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ButtonBase from '@material-ui/core/ButtonBase';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { CdiscLibraryContext, FilterContext, CtContext } from '../../constants/contexts.js';
 import Loading from '../utils/loading.js';
 import saveCtFromCdiscLibrary from '../../utils/saveCtFromCdiscLibrary.js';
@@ -26,6 +26,7 @@ const getStyles = makeStyles(theme => ({
     },
     main: {
         outline: 'none',
+        flex: 1,
     },
     codeListButton: {
         color: theme.palette.primary.main,
@@ -120,6 +121,35 @@ const CodeLists = (props) => {
         setOpenedCodeListDetails(null);
     };
 
+    const renderRow = (props) => {
+        const codeList = props.data[props.index];
+
+        return (
+            <ListItem
+                button
+                key={codeList.cdiscSubmissionValue}
+                disabled={codeList.type === 'headerGroup'}
+                onClick={selectCodeList(codeList)}
+                className={classes.item}
+                style={props.style}
+            >
+                <ListItemText
+                    primary={
+                        <ButtonBase
+                            id='codeListButton'
+                            onClick={showCodeListDetails(codeList)}
+                            className={classes.codeListButton}
+                        >
+                            {codeList.cdiscSubmissionValue}
+                        </ButtonBase>
+                    }
+                    secondary={codeList.preferredTerm}
+                    className={classes.row}
+                />
+            </ListItem>
+        );
+    };
+
     const showList = () => {
         let codeListsNew = Object.values(codeLists);
 
@@ -134,41 +164,21 @@ const CodeLists = (props) => {
         }
 
         return (
-            <List>
-                {codeListsNew.map(codeList => (
-                    <ListItem
-                        button
-                        key={codeList.cdiscSubmissionValue}
-                        disabled={codeList.type === 'headerGroup'}
-                        onClick={selectCodeList(codeList)}
-                        className={classes.item}
-                    >
-                        <ListItemText
-                            primary={
-                                <ButtonBase
-                                    id='codeListButton'
-                                    onClick={showCodeListDetails(codeList)}
-                                    className={classes.codeListButton}
-                                >
-                                    {codeList.cdiscSubmissionValue}
-                                </ButtonBase>
-                            }
-                            secondary={codeList.preferredTerm}
-                            className={classes.row}
-                        />
-                    </ListItem>
-                ))}
-            </List>
+            <AutoSizer disableWidth>
+                {({ height, width }) => (
+                    <FixedSizeList height={height} itemSize={72} itemCount={codeListsNew.length} itemData={codeListsNew}>
+                        {renderRow}
+                    </FixedSizeList>
+                )}
+            </AutoSizer>
         );
     };
 
     return (
         <React.Fragment>
-            <Grid container justify='flex-start' direction='column' wrap='nowrap' className={classes.main}>
-                <Grid item>
-                    { codeLists.length === 0 ? (<Loading onRetry={getCodeLists} />) : (showList()) }
-                </Grid>
-            </Grid>
+            <div className={classes.main}>
+                { codeLists.length === 0 ? (<Loading onRetry={getCodeLists} />) : (showList()) }
+            </div>
             <SwipeableDrawer
                 anchor='bottom'
                 open={openedCodeListDetails !== null}

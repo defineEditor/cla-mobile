@@ -22,6 +22,8 @@ export const loadState = () => {
             return initialState;
         } else {
             const state = JSON.parse(serializedState);
+            // Start with products page
+            state.ui.main.page = 'products';
             return mergeDefaults(state, initialState);
         }
     } catch (err) {

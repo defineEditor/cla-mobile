@@ -1,5 +1,6 @@
 const uiMain = {
     page: 'products',
+    filterStringHistory: {},
 };
 
 const uiProducts = {

@@ -76,85 +76,8 @@ const Products = () => {
     const classes = getStyles();
 
     const getProductClasses = useCallback(async () => {
-        const productClasses = await cdiscLibrary.getProductClasses();
-        const allProducts = {};
-        const panelIds = Object.keys(productClasses);
-        if (panelIds.length === 0) {
-            // Products were not loaded
-            return;
-        }
-        let result = {};
-        if (productType === 'standards') {
-            panelIds
-                .filter(classId => (classId !== 'terminology'))
-                .forEach(classId => {
-                    // Create label from the ID
-                    result[classId] = { title: classId.replace('-', ' ').replace(/\b(\S)/g, (txt) => { return txt.toUpperCase(); }) };
-                    const pgs = productClasses[classId].getProductGroups();
-                    const groups = {};
-                    Object.keys(pgs).forEach(gId => {
-                        groups[gId] = {
-                            title: gId
-                                .replace('-', ' ')
-                                .replace(/\b(\S*)/g, (txt) => {
-                                    if (txt.startsWith('adam')) {
-                                        return 'ADaM' + txt.substring(4);
-                                    } else {
-                                        return txt.toUpperCase();
-                                    }
-                                })
-                        };
-                        const ps = pgs[gId].getProducts();
-                        const products = {};
-                        Object.keys(ps).forEach(pId => {
-                            products[pId] = { title: getProductTitle(pId).replace(/(?:ADaM|SDTM|CDASH|SEND)(?:-IG)? ([a-zA-Z]+.*)/g, '$1') };
-                            allProducts[pId] = products[pId];
-                        });
-                        groups[gId].products = products;
-                    });
-                    result[classId].groups = groups;
-                });
-        } else if (productType === 'terminology') {
-            panelIds
-                .filter(classId => (classId === 'terminology'))
-                .forEach(classId => {
-                    // Create label from the ID
-                    result[classId] = { title: '' };
-                    const ctProducts = productClasses.terminology.productGroups.packages.products;
-                    // Split groups by model
-                    const groups = {};
-                    Object.keys(ctProducts).forEach(ctId => {
-                        const ctProduct = ctProducts[ctId];
-                        const model = ctProduct.model;
-                        if (groups[model] === undefined) {
-                            groups[model] = {
-                                title: model,
-                                products: {},
-                            };
-                        }
-                        groups[model].products[ctId] = { title: ctProduct.version, model };
-                        allProducts[ctId] = groups[model].products[ctId];
-                    });
-                    result[classId].groups = groups;
-                });
-        }
-        // Add recent products
-        const recent = {
-            title: 'Recent',
-            groups: { recent: { products: {}, title: '' } },
-        };
-        if (productType === 'standards') {
-            recentStandards.forEach(productId => {
-                recent.groups.recent.products[productId] = allProducts[productId];
-            });
-        } else {
-            recentCt.forEach(productId => {
-                recent.groups.recent.products[productId] = { title: allProducts[productId].model + '\n' + allProducts[productId].title };
-            });
-        }
-        result = { recent, ...result };
-        setProductClasses(result);
-    }, [cdiscLibrary, recentStandards, recentCt, productType]);
+        setProductClasses(await cdiscLibrary.getProductClasses());
+    }, [cdiscLibrary]);
 
     useEffect(() => {
         getProductClasses();
@@ -268,12 +191,96 @@ const Products = () => {
     };
 
     const getClasses = (data, classes) => {
-        const result = Object.keys(data)
+        const allProducts = {};
+        const panelIds = Object.keys(data);
+        if (panelIds.length === 0) {
+            // Products were not loaded
+            return;
+        }
+        let parsedData = {};
+        if (productType === 'standards') {
+            panelIds
+                .filter(classId => (classId !== 'terminology'))
+                .forEach(classId => {
+                    // Create label from the ID
+                    parsedData[classId] = { title: classId.replace('-', ' ').replace(/\b(\S)/g, (txt) => { return txt.toUpperCase(); }) };
+                    const pgs = productClasses[classId].getProductGroups();
+                    const groups = {};
+                    Object.keys(pgs).forEach(gId => {
+                        groups[gId] = {
+                            title: gId
+                                .replace('-', ' ')
+                                .replace(/\b(\S*)/g, (txt) => {
+                                    if (txt.startsWith('adam')) {
+                                        return 'ADaM' + txt.substring(4);
+                                    } else {
+                                        return txt.toUpperCase();
+                                    }
+                                })
+                        };
+                        const ps = pgs[gId].getProducts();
+                        const products = {};
+                        Object.keys(ps).forEach(pId => {
+                            products[pId] = { title: getProductTitle(pId).replace(/(?:ADaM|SDTM|CDASH|SEND)(?:-IG)? ([a-zA-Z]+.*)/g, '$1') };
+                            allProducts[pId] = products[pId];
+                        });
+                        groups[gId].products = products;
+                    });
+                    parsedData[classId].groups = groups;
+                });
+        } else if (productType === 'terminology') {
+            panelIds
+                .filter(classId => (classId === 'terminology'))
+                .forEach(classId => {
+                    // Create label from the ID
+                    parsedData[classId] = { title: '' };
+                    const ctProducts = productClasses.terminology.productGroups.packages.products;
+                    // Split groups by model
+                    const groups = {};
+                    Object.keys(ctProducts).forEach(ctId => {
+                        const ctProduct = ctProducts[ctId];
+                        const type = ctProduct.label.replace(/^(\S+).*/, '$1').toUpperCase();
+                        if (groups[type] === undefined) {
+                            groups[type] = {
+                                title: type,
+                                products: {},
+                            };
+                        }
+                        groups[type].products[ctId] = { title: ctProduct.version, type };
+                        allProducts[ctId] = groups[type].products[ctId];
+                    });
+                    parsedData[classId].groups = groups;
+                });
+        }
+        // Add recent products
+        const recent = {
+            title: 'Recent',
+            groups: { recent: { products: {}, title: '' } },
+        };
+        if (productType === 'standards') {
+            recentStandards.forEach(productId => {
+                recent.groups.recent.products[productId] = allProducts[productId];
+            });
+        } else {
+            recentCt.forEach(productId => {
+                let typeLabel = allProducts[productId].type;
+                if (typeLabel === 'DEFINE-XML') {
+                    typeLabel = 'DEF';
+                } else if (typeLabel === 'PROTOCOL') {
+                    typeLabel = 'PROT';
+                } else if (typeLabel === 'GLOSSARY') {
+                    typeLabel = 'GLOS';
+                }
+                recent.groups.recent.products[productId] = { title: typeLabel + '\n' + allProducts[productId].title };
+            });
+        }
+        parsedData = { recent, ...parsedData };
+        const result = Object.keys(parsedData)
         // Show group only if at least one is present
             .filter(panelId => {
-                return Object.keys(data[panelId].groups).some(groupId => {
-                    return Object.keys(data[panelId].groups[groupId].products).some(productId => {
-                        const title = data[panelId].groups[groupId].products[productId].title;
+                return Object.keys(parsedData[panelId].groups).some(groupId => {
+                    return Object.keys(parsedData[panelId].groups[groupId].products).some(productId => {
+                        const title = parsedData[panelId].groups[groupId].products[productId].title;
                         if (filterString !== '') {
                             return title.toLowerCase().includes(filterString.toLowerCase());
                         } else {
@@ -296,13 +303,13 @@ const Products = () => {
                             disableGutters
                         >
                             <Grid container>
-                                { data[panelId].title !== '' && (
+                                { parsedData[panelId].title !== '' && (
                                     <Grid item ls={12} className={classes.group}>
-                                        <Typography variant='h5' color='textSecondary' className={classes.classHeading}>{data[panelId].title}</Typography>
+                                        <Typography variant='h5' color='textSecondary' className={classes.classHeading}>{parsedData[panelId].title}</Typography>
                                     </Grid>
                                 )}
                                 <Grid item className={classes.group}>
-                                    {getGroups(data[panelId].groups, classes)}
+                                    {getGroups(parsedData[panelId].groups, classes)}
                                 </Grid>
                             </Grid>
                         </ListItem>

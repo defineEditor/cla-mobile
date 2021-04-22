@@ -18,9 +18,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "https://defineEditor.com/mobileBrowser",
-  "scope": "https://defineEditor.com/mobileBrowser",
+  "start_url": "https://defineEditor.com/mobileBrowser/",
+  "scope": "https://defineEditor.com/mobileBrowser/",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#9295a21a"
+  "background_color": "#DFE0E4"
 }

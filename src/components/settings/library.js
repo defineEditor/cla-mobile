@@ -155,7 +155,6 @@ const Library = (props) => {
                                 onChange={props.handleChange('cdiscLibrary', 'itemsShowSetSubheader')}
                                 color='primary'
                                 className={classes.switch}
-                                disabled
                             />
                         }
                         label='Show subheaders for variable sets or classes'

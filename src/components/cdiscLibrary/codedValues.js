@@ -16,6 +16,12 @@ const getStyles = makeStyles(theme => ({
         outline: 'none',
         flex: 1,
     },
+    label: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 2,
+        boxOrient: 'vertical',
+    },
 }));
 
 const CodedValues = (props) => {
@@ -40,7 +46,7 @@ const CodedValues = (props) => {
             >
                 <ListItemText
                     primary={item.codedValue}
-                    secondary={item.decodes[0].value}
+                    secondary={<span className={classes.label}>{item.decodes[0].value}</span>}
                 />
             </ListItem>
         );

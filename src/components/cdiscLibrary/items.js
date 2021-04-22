@@ -6,6 +6,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
+import Typography from '@material-ui/core/Typography';
 import Loading from '../utils/loading.js';
 import ItemView from './itemView.js';
 import { CdiscLibraryContext, FilterContext } from '../../constants/contexts.js';
@@ -16,6 +17,20 @@ const getStyles = makeStyles(theme => ({
         paddingRight: theme.spacing(1),
         outline: 'none',
         flex: 1,
+    },
+    label: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 2,
+        boxOrient: 'vertical',
+    },
+    subheader: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    subheaderText: {
+        textAlign: 'center',
     },
 }));
 
@@ -44,6 +59,7 @@ const Items = (props) => {
     const productId = useSelector(state => state.present.ui.itemGroups.productId);
     const itemType = useSelector(state => state.present.ui.items.itemType);
     const itemGroupId = useSelector(state => state.present.ui.items.itemGroupId);
+    const showSubheader = useSelector(state => state.present.settings.cdiscLibrary.itemsShowSetSubheader);
     const filterString = useContext(FilterContext).filterString;
     const classes = getStyles();
 
@@ -60,7 +76,15 @@ const Items = (props) => {
                 Object.keys(variableSets).forEach((set, index) => {
                     const setItems = Object.values(itemGroup.analysisVariableSets[set].getItems())
                         .map(item => ({ ...item, ordinal: index + '.' + item.ordinal, variableSet: set }));
-                    items = items.concat(setItems);
+                    if (showSubheader) {
+                        items.push({
+                            type: 'subheader',
+                            name: variableSets[set],
+                        });
+                        items = items.concat(setItems);
+                    } else {
+                        items = items.concat(setItems);
+                    }
                 });
                 // Add variable set all to show all values;
                 variableSets = { __all: 'All', ...variableSets };
@@ -96,7 +120,7 @@ const Items = (props) => {
             itemGroup = product.dataClasses[itemGroupId];
             setData({ itemGroup, items: Object.values(itemGroup.getItems({ immediate: true })), product });
         }
-    }, [cdiscLibrary, productId, itemGroupId, itemType]);
+    }, [cdiscLibrary, productId, itemGroupId, itemType, showSubheader]);
 
     useEffect(() => {
         getItems();
@@ -105,27 +129,47 @@ const Items = (props) => {
     const renderRow = (props) => {
         const item = props.data[props.index];
 
-        return (
-            <ListItem
-                button
-                key={item.name}
-                style={props.style}
-                disabled={item.type === 'headerGroup'}
-                onClick={() => { setOpenedItem(item); }}
-            >
-                <ListItemText
-                    primary={item.name}
-                    secondary={item.label || item.prompt}
-                />
-            </ListItem>
-        );
+        if (item.type === 'subheader') {
+            return (
+                <div
+                    key={item.name}
+                    style={props.style}
+                    className={classes.subheader}
+                >
+                    <Typography
+                        variant="h6"
+                        gutterBottom
+                        align="left"
+                        color='textSecondary'
+                        className={classes.subheaderText}
+                    >
+                        {item.name}
+                    </Typography>
+                </div>
+            );
+        } else {
+            return (
+                <ListItem
+                    button
+                    key={item.name}
+                    style={props.style}
+                    disabled={item.type === 'headerGroup'}
+                    onClick={() => { setOpenedItem(item); }}
+                >
+                    <ListItemText
+                        primary={item.name}
+                        secondary={<span className={classes.label}>{item.label || item.prompt}</span>}
+                    />
+                </ListItem>
+            );
+        }
     };
 
     const showList = () => {
         let items = data.items.slice();
 
         if (filterString !== '') {
-            items = items.filter(row => {
+            items = items.filter(row => row.type !== 'subheader').filter(row => {
                 return row.name.toLowerCase().includes(filterString.toLowerCase()) || (row.label || row.prompt).toLowerCase().includes(filterString.toLowerCase());
             });
         }

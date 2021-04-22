@@ -65,7 +65,7 @@ const useStyles = makeStyles((theme) => ({
         transition: theme.transitions.create('width'),
         width: '0px',
         '&:focus': {
-            width: '90px',
+            width: '120px',
             marginLeft: theme.spacing(1),
             marginRight: theme.spacing(2),
         },
@@ -84,7 +84,7 @@ export default function TopBar (props) {
     const handleChange = (event, value, reason) => {
         if (reason === 'select-option') {
             setFilterString(value);
-        } else if (reason === 'clear') {
+        } else if (reason === 'clear' && event.target.tagName !== 'INPUT') {
             event.stopPropagation();
             setFilterString('');
             setSearchFocused(false);
@@ -102,7 +102,9 @@ export default function TopBar (props) {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             dispatch(updateFilterStringHistory({ filterString: event.target.value }));
-            inputRef.current.blur();
+            if (event.target.value === '') {
+                inputRef.current.blur();
+            }
         }
     };
 
@@ -149,13 +151,13 @@ export default function TopBar (props) {
                             />
                         </div>
                     )}
-                    {['items', 'codeLists', 'codedValues'].includes(props.page) && (
+                    {!searchFocused && ['items', 'codeLists', 'codedValues'].includes(props.page) && (
                         <IconButton color="default" size='small' className={classes.backIcon}>
                             <FilterList className={classes.backArrow}/>
                         </IconButton>
                     )}
-                    { !searchFocused && (
-                        <Typography variant='h6' color='textPrimary' className={classes.label}>
+                    {!searchFocused && (
+                        <Typography variant='subtitle1' color='textPrimary' className={classes.label}>
                             {label}
                         </Typography>
                     )}

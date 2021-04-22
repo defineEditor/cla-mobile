@@ -290,14 +290,16 @@ const ItemView = (props) => {
                         {item.definition}
                     </Typography>
                 </Grid>
-                <Grid item>
-                    <Typography className={classes.subheader} color="textSecondary">
-                        Synonyms
-                    </Typography>
-                    <Typography variant="body1">
-                        {item.synonyms.join(', ')}
-                    </Typography>
-                </Grid>
+                {item.synonyms.length > 0 && (
+                    <Grid item>
+                        <Typography className={classes.subheader} color="textSecondary">
+                            Synonyms
+                        </Typography>
+                        <Typography variant="body1">
+                            {item.synonyms.join(', ')}
+                        </Typography>
+                    </Grid>
+                )}
             </React.Fragment>
         );
     };

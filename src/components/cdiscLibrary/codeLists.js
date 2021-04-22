@@ -28,6 +28,12 @@ const getStyles = makeStyles(theme => ({
         outline: 'none',
         flex: 1,
     },
+    groupDescription: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 2,
+        boxOrient: 'vertical',
+    },
     codeListButton: {
         color: theme.palette.primary.main,
         padding: 0,
@@ -143,7 +149,7 @@ const CodeLists = (props) => {
                             {codeList.cdiscSubmissionValue}
                         </ButtonBase>
                     }
-                    secondary={codeList.preferredTerm}
+                    secondary={<span className={classes.groupDescription}>{codeList.preferredTerm}</span>}
                     className={classes.row}
                 />
             </ListItem>
@@ -154,13 +160,9 @@ const CodeLists = (props) => {
         let codeListsNew = Object.values(codeLists);
 
         if (filterString !== '') {
-            codeListsNew = codeListsNew.filter(row => {
-                if (/[A-Z]/.test(filterString)) {
-                    return row.cdiscSubmissionValue.includes(filterString) || row.preferredTerm.includes(filterString);
-                } else {
-                    return row.cdiscSubmissionValue.toLowerCase().includes(filterString) || row.preferredTerm.toLowerCase().includes(filterString);
-                }
-            });
+            codeListsNew = codeListsNew.filter(row =>
+                row.cdiscSubmissionValue.toLowerCase().includes(filterString) || row.preferredTerm.toLowerCase().includes(filterString)
+            );
         }
 
         return (

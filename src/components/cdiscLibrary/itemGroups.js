@@ -36,6 +36,12 @@ const getStyles = makeStyles(theme => ({
     childGroup: {
         marginLeft: theme.spacing(3),
     },
+    groupDescription: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 2,
+        boxOrient: 'vertical',
+    },
     main: {
         outline: 'none',
     },
@@ -60,7 +66,7 @@ const ItemGroups = (props) => {
     const dispatch = useDispatch();
     const cdiscLibrary = useContext(CdiscLibraryContext).cdiscLibrary;
     const productId = useSelector(state => state.present.ui.itemGroups.productId);
-    const gridView = useSelector(state => state.present.ui.itemGroups.itemGroupsGridView);
+    const gridView = useSelector(state => state.present.settings.cdiscLibrary.itemGroupsGridView);
     const { filterString, setFilterString } = useContext(FilterContext);
     const [openedItemGroupDetails, setOpenedItemGroupDetails] = useState(null);
     const classes = getStyles();
@@ -278,7 +284,7 @@ const ItemGroups = (props) => {
                                 </ButtonBase>)
                                 : itemGroup.name
                             }
-                            secondary={itemGroup.label}
+                            secondary={<span className={classes.groupDescription}>{itemGroup.label}</span>}
                             className={getListClassName(itemGroup, classes)}
                         />
                     </ListItem>

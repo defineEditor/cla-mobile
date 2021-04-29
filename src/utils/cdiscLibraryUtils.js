@@ -3,8 +3,9 @@ import clone from 'clone';
 import { openDB } from 'idb';
 import Jszip from 'jszip';
 
-const getRequestId = async (request) => {
+const getRequestId = (request) => {
     const shortenedUrl = request.url
+        .replace(/.*\/nciSite\//, 'nciSite/')
         .replace('/root/', '/r/')
         .replace('/cdash/', '/cd/')
         .replace('/cdashig/', '/cdi/')
@@ -26,21 +27,12 @@ const getRequestId = async (request) => {
         .replace('/scenarios/', '/s/')
         .replace(/.*?\/mdr\//, '')
     ;
-    const requestOptions = JSON.stringify({ ...request.headers });
-    const hash = await window.crypto.subtle.digest('SHA-1', new TextEncoder().encode(requestOptions));
-    const hashArray = Array.from(new Uint8Array(hash));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    if (request && request.headers && request.headers.Accept === 'application/json') {
-        // These are standard request options, no need to add a hash code
-        return shortenedUrl;
-    } else {
-        return shortenedUrl + hashHex;
-    }
+    return shortenedUrl;
 };
 
 const claMatch = async (request) => {
     // Get an id
-    const id = await getRequestId(request);
+    const id = getRequestId(request);
 
     const db = await openDB('cdiscLibrary-store', 1, {
         upgrade (db) {
@@ -56,20 +48,24 @@ const claMatch = async (request) => {
         await zip.loadAsync(zippedData);
         if (Object.keys(zip.files).includes('response.json')) {
             const result = await zip.file('response.json').async('string');
-            return { statusCode: 200, body: result };
+            return JSON.parse(result);
         }
     }
 };
 
 const claPut = async (request, response) => {
     // Get an id
-    const id = await getRequestId(request);
+    const id = getRequestId(request);
     // Do not put CT in cache, as it is converted to a different format and stored in another DB
-    if (id.startsWith('ct/p/')) {
+    if (id.startsWith('ct/p/') || /^\/nciSite\/.*xml/.test(id)) {
         return;
     }
-    // Minify the response
-    const data = JSON.parse(response.body);
+    const data = { headers: response.headers, statusCode: response.statusCode };
+    if (data?.headers['content-type']?.includes('application/json')) {
+        data.body = JSON.stringify(JSON.parse(response.body));
+    } else {
+        data.body = response.body;
+    }
     // Compress the data
     const zip = new Jszip();
     zip.file('response.json', JSON.stringify(data));
@@ -92,25 +88,24 @@ const claPut = async (request, response) => {
 };
 
 export const initCdiscLibrary = (settings) => {
-    const claSettings = settings;
-
     const options = {
-        baseUrl: claSettings.baseUrl,
         cache: { match: claMatch, put: claPut },
-        apiKey: claSettings.apiKey,
+        contentEncoding: 'gzip',
+        ...settings,
     };
     return new CdiscLibrary(options);
 };
 
 export const updateCdiscLibrarySettings = (settingsDiff, originalSettings, cdiscLibraryContext) => {
-    // Encrypt the cdiscLibrary password/apiKey
     const diff = clone(settingsDiff);
-    // If the credentials/baseUrl was changed, use the new
-    if (diff.apiKey !== undefined || diff.baseUrl !== undefined) {
+    // If the connection options were changed, create a new CDISC Lib
+    if (diff.apiKey !== undefined || diff.baseUrl !== undefined || diff.useNciSiteForCt !== undefined) {
         const settings = { ...originalSettings, ...diff };
-        cdiscLibraryContext.setCdiscLibrary(initCdiscLibrary(settings));
+        const newCdiscLibrary = initCdiscLibrary(settings);
+        // It is required to reset contents to avoid potential conflicts
+        newCdiscLibrary.reset();
+        cdiscLibraryContext.setCdiscLibrary(newCdiscLibrary);
     }
-    // Returns settings with encrypted password/apiKey if it was in diff
     return diff;
 };
 

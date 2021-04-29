@@ -7,7 +7,7 @@ import Tab from '@material-ui/core/Tab';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import LibrarySettings from './library.js';
-import CTSettings from './ctSettings.js';
+import CtSettings from './ctSettings.js';
 
 const TabPanel = (props) => {
     const { children, value, index, classes } = props;
@@ -84,14 +84,14 @@ const SettingTabs = (props) => {
                     scrollButtons='auto'
                 >
                     <Tab label='Library' />
-                    <Tab label='CT' disabled />
+                    <Tab label='CT' />
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0} classes={classes}>
                 <LibrarySettings {...props} />
             </TabPanel>
             <TabPanel value={value} index={1} classes={classes}>
-                <CTSettings {...props} />
+                <CtSettings {...props} />
             </TabPanel>
             <AppBar
                 position='fixed'

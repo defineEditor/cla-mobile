@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { openDB } from 'idb';
-import Jszip from 'jszip';
+import { FixedSizeList } from 'react-window';
 import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ButtonBase from '@material-ui/core/ButtonBase';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { CdiscLibraryContext, FilterContext, CtContext } from '../../constants/contexts.js';
 import Loading from '../utils/loading.js';
-import saveCtFromCdiscLibrary from '../../utils/saveCtFromCdiscLibrary.js';
+import getCt from '../../utils/getCt.js';
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 import ItemView from './itemView.js';
 import { changePage } from '../../redux/slices/ui.js';
@@ -26,6 +24,13 @@ const getStyles = makeStyles(theme => ({
     },
     main: {
         outline: 'none',
+        flex: 1,
+    },
+    groupDescription: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 2,
+        boxOrient: 'vertical',
     },
     codeListButton: {
         color: theme.palette.primary.main,
@@ -55,31 +60,7 @@ const CodeLists = (props) => {
         if (ct[productId] !== undefined) {
             return;
         }
-        // Check if CT is in cached data
-        const db = await openDB('ct-store', 1, {
-            upgrade (db) {
-                db.createObjectStore('controlledTerminology', {});
-            },
-        });
-
-        // Search for the response in cache
-        let loadedCt;
-        const response = await db.get('controlledTerminology', productId);
-        if (response !== undefined) {
-            const zippedData = response.data;
-            const zip = new Jszip();
-            await zip.loadAsync(zippedData);
-            if (Object.keys(zip.files).includes('ct.json')) {
-                loadedCt = JSON.parse(await zip.file('ct.json').async('string'));
-            }
-        } else {
-            const ctRaw = await cdiscLibrary.getFullProduct(productId);
-            loadedCt = await saveCtFromCdiscLibrary(ctRaw);
-        }
-        if (loadedCt?.study === undefined) {
-            // CT was not loaded
-            return;
-        }
+        const loadedCt = await getCt(productId, { cdiscLibrary });
 
         const mdv = loadedCt.study.metaDataVersion;
         dispatch(updateCt({
@@ -108,7 +89,7 @@ const CodeLists = (props) => {
             return;
         }
         setFilterString('');
-        dispatch(changePage({ page: 'codedValues', codeListId: codeList.oid }));
+        dispatch(changePage({ page: 'codedValues', codeListId: codeList.oid, label: codeList.cdiscSubmissionValue }));
     };
 
     const showCodeListDetails = (codeList) => (event) => {
@@ -120,55 +101,60 @@ const CodeLists = (props) => {
         setOpenedCodeListDetails(null);
     };
 
+    const renderRow = (props) => {
+        const codeList = props.data[props.index];
+
+        return (
+            <ListItem
+                button
+                key={codeList.cdiscSubmissionValue}
+                disabled={codeList.type === 'headerGroup'}
+                onClick={selectCodeList(codeList)}
+                className={classes.item}
+                style={props.style}
+            >
+                <ListItemText
+                    primary={
+                        <ButtonBase
+                            id='codeListButton'
+                            onClick={showCodeListDetails(codeList)}
+                            className={classes.codeListButton}
+                        >
+                            {codeList.cdiscSubmissionValue}
+                        </ButtonBase>
+                    }
+                    secondary={<span className={classes.groupDescription}>{codeList.preferredTerm}</span>}
+                    className={classes.row}
+                />
+            </ListItem>
+        );
+    };
+
     const showList = () => {
         let codeListsNew = Object.values(codeLists);
 
         if (filterString !== '') {
-            codeListsNew = codeListsNew.filter(row => {
-                if (/[A-Z]/.test(filterString)) {
-                    return row.cdiscSubmissionValue.includes(filterString) || row.preferredTerm.includes(filterString);
-                } else {
-                    return row.cdiscSubmissionValue.toLowerCase().includes(filterString) || row.preferredTerm.toLowerCase().includes(filterString);
-                }
-            });
+            codeListsNew = codeListsNew.filter(row =>
+                row.cdiscSubmissionValue.toLowerCase().includes(filterString) || row.preferredTerm.toLowerCase().includes(filterString)
+            );
         }
 
         return (
-            <List>
-                {codeListsNew.map(codeList => (
-                    <ListItem
-                        button
-                        key={codeList.cdiscSubmissionValue}
-                        disabled={codeList.type === 'headerGroup'}
-                        onClick={selectCodeList(codeList)}
-                        className={classes.item}
-                    >
-                        <ListItemText
-                            primary={
-                                <ButtonBase
-                                    id='codeListButton'
-                                    onClick={showCodeListDetails(codeList)}
-                                    className={classes.codeListButton}
-                                >
-                                    {codeList.cdiscSubmissionValue}
-                                </ButtonBase>
-                            }
-                            secondary={codeList.preferredTerm}
-                            className={classes.row}
-                        />
-                    </ListItem>
-                ))}
-            </List>
+            <AutoSizer disableWidth>
+                {({ height, width }) => (
+                    <FixedSizeList height={height} itemSize={72} itemCount={codeListsNew.length} itemData={codeListsNew}>
+                        {renderRow}
+                    </FixedSizeList>
+                )}
+            </AutoSizer>
         );
     };
 
     return (
         <React.Fragment>
-            <Grid container justify='flex-start' direction='column' wrap='nowrap' className={classes.main}>
-                <Grid item>
-                    { codeLists.length === 0 ? (<Loading onRetry={getCodeLists} />) : (showList()) }
-                </Grid>
-            </Grid>
+            <div className={classes.main}>
+                { codeLists.length === 0 ? (<Loading onRetry={getCodeLists} />) : (showList()) }
+            </div>
             <SwipeableDrawer
                 anchor='bottom'
                 open={openedCodeListDetails !== null}

@@ -6,7 +6,10 @@ import Grid from '@material-ui/core/Grid';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import ButtonBase from '@material-ui/core/ButtonBase';
 import { CdiscLibraryContext, FilterContext } from '../../constants/contexts.js';
+import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
+import ItemView from './itemView.js';
 import Loading from '../utils/loading.js';
 import { changePage } from '../../redux/slices/ui.js';
 
@@ -33,8 +36,25 @@ const getStyles = makeStyles(theme => ({
     childGroup: {
         marginLeft: theme.spacing(3),
     },
+    groupDescription: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 2,
+        boxOrient: 'vertical',
+    },
     main: {
         outline: 'none',
+    },
+    itemGroupButton: {
+        color: theme.palette.primary.main,
+        padding: 0,
+        fontSize: '16px',
+        boxSizing: 'border-box',
+        transition: 'background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
+        fontWeight: 500,
+        lineHeight: 1.75,
+        borderRadius: '4px',
+        letterSpacing: '0.02857em',
     },
 }));
 
@@ -46,8 +66,9 @@ const ItemGroups = (props) => {
     const dispatch = useDispatch();
     const cdiscLibrary = useContext(CdiscLibraryContext).cdiscLibrary;
     const productId = useSelector(state => state.present.ui.itemGroups.productId);
-    const gridView = useSelector(state => state.present.ui.itemGroups.gridView);
+    const gridView = useSelector(state => state.present.settings.cdiscLibrary.itemGroupsGridView);
     const { filterString, setFilterString } = useContext(FilterContext);
+    const [openedItemGroupDetails, setOpenedItemGroupDetails] = useState(null);
     const classes = getStyles();
 
     const getItemGroups = useCallback(async () => {
@@ -61,7 +82,6 @@ const ItemGroups = (props) => {
                         id: dataClass.id,
                         name: dataClass.name,
                         label: dataClass.label,
-                        model: product.model,
                     };
                     if (Object.keys(dataClass.getItems({ immediate: true })).length === 0) {
                         classGroup.type = 'headerGroup';
@@ -73,22 +93,14 @@ const ItemGroups = (props) => {
                     const childGroups = Object.values(classGroups)
                         .sort((ig1, ig2) => (ig1.name > ig2.name ? 1 : -1))
                         .map(group => {
-                            let isReferenceData, repeating;
-                            if (group.findMatchingItems('USUBJID').length > 0) {
-                                isReferenceData = 'No';
-                            } else {
-                                isReferenceData = 'Yes';
-                                repeating = 'No';
-                            }
                             return (
                                 {
                                     id: group.id,
                                     name: group.name,
                                     label: group.label,
-                                    model: product.model,
+                                    description: group.description,
                                     type: 'childGroup',
-                                    isReferenceData,
-                                    repeating,
+                                    itemNum: Object.keys(group.getItems()).length,
                                 }
                             );
                         });
@@ -123,6 +135,10 @@ const ItemGroups = (props) => {
     }, [getItemGroups]);
 
     const selectItemGroup = (itemGroup) => () => {
+        if (event.target.id === 'itemGroupButton') {
+            // If the button was clicked, open details and not the items
+            return;
+        }
         setFilterString('');
         if (data.type === 'subgroups') {
             // Get type
@@ -141,9 +157,9 @@ const ItemGroups = (props) => {
                 });
             }
 
-            dispatch(changePage({ page: 'items', itemGroupId, itemType: type }));
+            dispatch(changePage({ page: 'items', itemGroupId, itemType: type, label: itemGroup.name }));
         } else {
-            dispatch(changePage({ page: 'items', itemGroupId: itemGroup.name, itemType: 'itemGroup' }));
+            dispatch(changePage({ page: 'items', itemGroupId: itemGroup.name, itemType: 'itemGroup', label: itemGroup.name }));
         }
     };
 
@@ -226,6 +242,15 @@ const ItemGroups = (props) => {
         ));
     };
 
+    const showItemGroupDetails = (itemGroup) => (event) => {
+        event.stopPropagation();
+        setOpenedItemGroupDetails(itemGroup);
+    };
+
+    const closeItemGroupDetailsView = () => {
+        setOpenedItemGroupDetails(null);
+    };
+
     const showList = () => {
         let itemGroups = data.itemGroups.slice();
 
@@ -249,8 +274,17 @@ const ItemGroups = (props) => {
                         onClick={selectItemGroup(itemGroup)}
                     >
                         <ListItemText
-                            primary={itemGroup.name}
-                            secondary={itemGroup.label}
+                            primary={ itemGroup.type === 'childGroup'
+                                ? (<ButtonBase
+                                    id='itemGroupButton'
+                                    onClick={showItemGroupDetails(itemGroup)}
+                                    className={classes.itemGroupButton}
+                                >
+                                    {itemGroup.name}
+                                </ButtonBase>)
+                                : itemGroup.name
+                            }
+                            secondary={<span className={classes.groupDescription}>{itemGroup.label}</span>}
                             className={getListClassName(itemGroup, classes)}
                         />
                     </ListItem>
@@ -260,11 +294,21 @@ const ItemGroups = (props) => {
     };
 
     return (
-        <Grid container justify='flex-start' direction='column' wrap='nowrap' className={classes.main}>
-            <Grid item>
-                { data.product === null ? (<Loading onRetry={getItemGroups} />) : (gridView ? showGrid() : showList()) }
+        <React.Fragment>
+            <Grid container justify='flex-start' direction='column' wrap='nowrap' className={classes.main}>
+                <Grid item>
+                    { data.product === null ? (<Loading onRetry={getItemGroups} />) : (gridView ? showGrid() : showList()) }
+                </Grid>
             </Grid>
-        </Grid>
+            <SwipeableDrawer
+                anchor='bottom'
+                open={openedItemGroupDetails !== null}
+                onOpen={closeItemGroupDetailsView}
+                onClose={closeItemGroupDetailsView}
+            >
+                <ItemView item={openedItemGroupDetails} type='itemGroup'/>
+            </SwipeableDrawer>
+        </React.Fragment>
     );
 };
 

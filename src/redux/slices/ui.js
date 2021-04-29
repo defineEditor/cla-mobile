@@ -43,6 +43,10 @@ export const uiMainSlice = createSlice({
             } else {
                 newState.main.page = 'products';
             }
+            if (newState.main.page === 'products') {
+                // Clean history so that user can exit app using back button
+                window.history.go(-window.history.length);
+            }
             return newState;
         },
         openSnackbar: (state, action) => {
@@ -92,6 +96,17 @@ export const uiMainSlice = createSlice({
         changeProductType: (state, action) => {
             return { ...state, products: { ...state.products, productType: action.payload } };
         },
+        updateFilterStringHistory: (state, action) => {
+            // Check if the item is already in the history
+            const history = state.main.filterStringHistory[state.main.page] || [];
+            if (history !== undefined && (history.includes(action.payload.filterString) || action.payload.filterString === '')) {
+                return state;
+            } else {
+                const newHistory = history.slice(0, 9);
+                newHistory.unshift(action.payload.filterString);
+                return { ...state, main: { ...state.main, filterStringHistory: { ...state.main.filterStringHistory, [state.main.page]: newHistory } } };
+            }
+        },
     }
 });
 
@@ -103,6 +118,7 @@ export const {
     openModal,
     closeModal,
     changeProductType,
+    updateFilterStringHistory,
 } = uiMainSlice.actions;
 
 export default uiMainSlice.reducer;

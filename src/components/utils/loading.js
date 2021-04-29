@@ -8,45 +8,49 @@ import Typography from '@material-ui/core/Typography';
 
 const getStyles = makeStyles(theme => ({
     root: {
-        margin: 0,
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
+        height: '100vh',
     },
 }));
 
 const Loading = (props) => {
     const classes = getStyles();
     return (
-        <div className={classes.root}>
-            <Grid container spacing={3} direction='column' alignItems='center'>
-                <Grid item>
-                    <Typography variant="h6" color='textSecondary' display='inline'>
-                        Loading
-                    </Typography>
-                </Grid>
-                <Grid item>
-                    <CircularProgress className={classes.progress} />
-                </Grid>
-                <Grid item>
-                    <Button
-                        color='default'
-                        size='large'
-                        variant='contained'
-                        className={classes.button}
-                        onClick={props.onRetry}
-                    >
-                        Retry
-                    </Button>
-                </Grid>
+        <Grid container spacing={3} direction='column' alignItems='center' justify='center' className={classes.root}>
+            <Grid item>
+                <Typography variant="h6" color='textSecondary' display='inline'>
+                    Loading
+                </Typography>
             </Grid>
-        </div>
+            <Grid item>
+                <CircularProgress/>
+            </Grid>
+            <Grid item>
+                <Button
+                    color='default'
+                    size='large'
+                    variant='contained'
+                    onClick={props.onRetry}
+                >
+                    Retry
+                </Button>
+            </Grid>
+            <Grid item>
+                <Typography variant="body2" color='textSecondary'>
+                    Use Settings to check connection to CDISC Library
+                </Typography>
+                {props.message !== undefined && (
+                    <Typography variant="body2" color='textSecondary'>
+                        {props.message}
+                    </Typography>
+                )}
+            </Grid>
+        </Grid>
     );
 };
 
 Loading.propTypes = {
     onRetry: PropTypes.func.isRequired,
+    message: PropTypes.string,
 };
 
 export default Loading;

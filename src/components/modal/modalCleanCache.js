@@ -17,6 +17,7 @@ const getStyles = makeStyles(theme => ({
         position: 'absolute',
         borderRadius: '10px',
         top: '10%',
+        width: '90%',
         transform: 'translate(0%, calc(-50%+0.5px))',
         overflowX: 'auto',
         maxHeight: '85%',
@@ -34,30 +35,41 @@ const getStyles = makeStyles(theme => ({
     },
 }));
 
-const ModalCleanCdiscLibraryCache = (props) => {
+const ModalCleanCache = (props) => {
     const [endpointsCount, setEndpointsCount] = useState(null);
     const dispatch = useDispatch();
     const classes = getStyles();
+    const cacheType = props.cacheType;
+
+    let dbName;
+    let storeName;
+    if (cacheType === 'cdiscLibrary') {
+        dbName = 'cdiscLibrary-store';
+        storeName = 'cdiscLibrary';
+    } else if (cacheType === 'controlledTerminology') {
+        dbName = 'ct-store';
+        storeName = 'controlledTerminology';
+    }
 
     useEffect(() => {
         const getInfo = async () => {
-            const db = await openDB('cdiscLibrary-store', 1, {
+            const db = await openDB(dbName, 1, {
                 upgrade (db) {
                     // Create a store of objects
-                    db.createObjectStore('cdiscLibrary', {});
+                    db.createObjectStore(storeName, {});
                 },
             });
 
-            const count = await db.count('cdiscLibrary');
+            const count = await db.count(storeName);
 
             setEndpointsCount(count);
         };
         getInfo();
-    }, []);
+    }, [dbName, storeName]);
 
     const onDelete = async () => {
         dispatch(closeModal({ type: props.type }));
-        await deleteDB('cdiscLibrary-store');
+        await deleteDB(dbName);
     };
 
     const onCancel = () => {
@@ -75,15 +87,24 @@ const ModalCleanCdiscLibraryCache = (props) => {
             tabIndex='0'
         >
             <DialogTitle id="alert-dialog-title" className={classes.title} disableTypography>
-                Clean CDISC Library Cache
+                {cacheType === 'cdiscLibrary' && 'Clean CDISC Library Cache'}
+                {cacheType === 'controlledTerminology' && 'Clean Controlled Terminology Cache'}
             </DialogTitle>
             <DialogContent>
                 <DialogContentText id="alert-dialog-description">
-                    { endpointsCount > 0 && (
+                    { endpointsCount > 0 && cacheType === 'cdiscLibrary' && (
+
                         `You have ${endpointsCount} endpoints saved in your cache. Are you sure you want to delete them?`
                     )}
-                    { endpointsCount <= 0 && (
+                    { endpointsCount > 0 && cacheType === 'controlledTerminology' && (
+
+                        `You have ${endpointsCount} controlled terminologies saved in your cache. Are you sure you want to delete them?`
+                    )}
+                    { endpointsCount <= 0 && cacheType === 'cdiscLibrary' && (
                         'There are no saved endpoints.'
+                    )}
+                    { endpointsCount <= 0 && cacheType === 'controlledTerminology' && (
+                        'There are no saved controlled terminologies.'
                     )}
                 </DialogContentText>
             </DialogContent>
@@ -103,8 +124,9 @@ const ModalCleanCdiscLibraryCache = (props) => {
     );
 };
 
-ModalCleanCdiscLibraryCache.propTypes = {
+ModalCleanCache.propTypes = {
     type: PropTypes.string.isRequired,
+    cacheType: PropTypes.string.isRequired,
 };
 
-export default ModalCleanCdiscLibraryCache;
+export default ModalCleanCache;

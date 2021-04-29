@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import AppBar from '@material-ui/core/AppBar';
@@ -7,6 +7,7 @@ import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import MenuBook from '@material-ui/icons/MenuBook';
 import Language from '@material-ui/icons/Language';
 import { changeProductType } from '../../redux/slices/ui.js';
+import { FilterContext } from '../../constants/contexts.js';
 
 const useStyles = makeStyles((theme) => ({
     bottomBar: {
@@ -21,9 +22,13 @@ const useStyles = makeStyles((theme) => ({
 export default function BottomBar () {
     const classes = useStyles();
     const productType = useSelector(state => state.present.ui.products.productType);
+    const { filterString, setFilterString } = useContext(FilterContext);
     const dispatch = useDispatch();
 
     const handleChange = (event, newValue) => {
+        if (filterString !== '') {
+            setFilterString('');
+        }
         dispatch(changeProductType(newValue));
     };
 

@@ -19,7 +19,8 @@
     }
   ],
   "start_url": "https://defineEditor.com/mobileBrowser",
+  "scope": "https://defineEditor.com/mobileBrowser",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#DFE0E4",
+  "background_color": "#DFE0E4"
 }

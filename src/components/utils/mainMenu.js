@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ActionCreators } from 'redux-undo';
 import { makeStyles } from '@material-ui/core/styles';
@@ -9,10 +9,12 @@ import HomeIcon from '@material-ui/icons/Home';
 import SaveIcon from '@material-ui/icons/Save';
 import ChevronLeft from '@material-ui/icons/ChevronLeft';
 import ChevronRight from '@material-ui/icons/ChevronRight';
+import HelpOutline from '@material-ui/icons/HelpOutline';
 import MoreVert from '@material-ui/icons/MoreVert';
 import Close from '@material-ui/icons/Close';
 import Settings from '@material-ui/icons/Settings';
 import saveState from './../../utils/saveState.js';
+import { MenuActionsContext } from '../../constants/contexts.js';
 import { changePage } from '../../redux/slices/ui.js';
 
 const useStyles = makeStyles((theme) => ({
@@ -26,12 +28,13 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function SpeedDials () {
+const MainMenu = (props) => {
     const classes = useStyles();
     const dispatch = useDispatch();
     const [open, setOpen] = React.useState(false);
     const futureLength = useSelector(state => state.future.length);
     const pastLength = useSelector(state => state.past.length);
+    const { menuActions } = useContext(MenuActionsContext);
 
     const handleClose = () => {
         setOpen(false);
@@ -48,6 +51,11 @@ export default function SpeedDials () {
 
     const goSettings = () => {
         dispatch(changePage({ page: 'settings' }));
+        handleClose();
+    };
+
+    const goAbout = () => {
+        dispatch(changePage({ page: 'about' }));
         handleClose();
     };
 
@@ -70,7 +78,14 @@ export default function SpeedDials () {
         { icon: <SaveIcon />, name: 'Save', onClick: save },
         { icon: <ChevronRight />, name: 'Redo', onClick: redo, disabled: futureLength === 0 },
         { icon: <ChevronLeft />, name: 'Undo', onClick: undo, disabled: pastLength === 0 },
+        { icon: <HelpOutline />, name: 'About', onClick: goAbout },
     ];
+
+    if (menuActions.length > 0) {
+        menuActions.forEach(menuAction => {
+            actions.splice(menuAction.position, 0, { ...menuAction.action, onClick: () => { handleClose(); menuAction.action.onClick(); } });
+        });
+    }
 
     return (
         <div className={classes.root}>
@@ -97,4 +112,6 @@ export default function SpeedDials () {
             </SpeedDial>
         </div>
     );
-}
+};
+
+export default MainMenu;

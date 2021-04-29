@@ -7,7 +7,6 @@ import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/FindInPage';
-import FilterList from '@material-ui/icons/FilterList';
 import ArrowBack from '@material-ui/icons/ArrowBack';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { FilterContext } from '../../constants/contexts.js';
@@ -148,11 +147,6 @@ export default function TopBar (props) {
                                 )}
                             />
                         </div>
-                    )}
-                    {!searchFocused && ['items', 'codeLists', 'codedValues'].includes(props.page) && (
-                        <IconButton color="default" size='small' className={classes.backIcon}>
-                            <FilterList className={classes.backArrow}/>
-                        </IconButton>
                     )}
                     {!searchFocused && (
                         <Typography variant='subtitle1' color='textPrimary' className={classes.label}>

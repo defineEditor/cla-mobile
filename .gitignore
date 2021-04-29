@@ -18,6 +18,8 @@
 .env.test.local
 .env.production.local
 *.sh
+*.swp
+*.swo
 /cert
 
 npm-debug.log*

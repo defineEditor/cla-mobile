@@ -1,12 +1,13 @@
 const uiMain = {
     page: 'products',
     filterStringHistory: {},
+    version: '',
 };
 
 const uiProducts = {
     recentStandards: [],
     recentCt: [],
-    productType: 'standards',
+    productType: 'terminology',
 };
 
 const uiItemGroups = {
@@ -48,6 +49,11 @@ export const settings = {
         baseUrl: 'https://defineeditor.com:4600/api',
         itemGroupsGridView: true,
         itemsShowSetSubheader: false,
+        useNciSiteForCt: true,
+        nciSiteUrl: 'https://defineeditor.com:4600/nciSite',
+    },
+    controlledTerminology: {
+        showLessMore: true,
     },
 };
 

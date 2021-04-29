@@ -44,9 +44,11 @@ const Library = (props) => {
 
     return (
         <Grid container>
-            <Typography variant="h6" gutterBottom align="left" color='textSecondary'>
-                Configuration
-            </Typography>
+            <Grid item xs={12} className={classes.subTitle}>
+                <Typography variant="h6" gutterBottom align="left" color='textSecondary'>
+                    Configuration
+                </Typography>
+            </Grid>
             <Grid item xs={12}>
                 <TextField
                     label='API Key'

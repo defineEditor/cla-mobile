@@ -11,7 +11,7 @@ import FilterList from '@material-ui/icons/FilterList';
 import ArrowBack from '@material-ui/icons/ArrowBack';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { FilterContext } from '../../constants/contexts.js';
-import SpeedDial from './speeddial.js';
+import MainMenu from './mainMenu.js';
 import { changeBack, updateFilterStringHistory } from '../../redux/slices/ui.js';
 
 const useStyles = makeStyles((theme) => ({
@@ -102,23 +102,21 @@ export default function TopBar (props) {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             dispatch(updateFilterStringHistory({ filterString: event.target.value }));
-            if (event.target.value === '') {
-                inputRef.current.blur();
-            }
+            inputRef.current.blur();
         }
     };
 
     return (
         <div className={classes.grow}>
             <AppBar position="fixed">
-                <SpeedDial />
+                <MainMenu />
                 <Toolbar>
                     {!['products'].includes(props.page) && (
                         <IconButton color="default" size='small' onClick={handleBack} className={classes.backIcon}>
                             <ArrowBack className={classes.backArrow}/>
                         </IconButton>
                     )}
-                    {!['settings'].includes(props.page) && (
+                    {!['settings', 'about'].includes(props.page) && (
                         <div className={classes.search}>
                             <div className={classes.searchIcon}>
                                 <SearchIcon />

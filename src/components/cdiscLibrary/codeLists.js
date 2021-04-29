@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { openDB } from 'idb';
-import Jszip from 'jszip';
 import { FixedSizeList } from 'react-window';
 import { makeStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
@@ -10,7 +8,7 @@ import ButtonBase from '@material-ui/core/ButtonBase';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { CdiscLibraryContext, FilterContext, CtContext } from '../../constants/contexts.js';
 import Loading from '../utils/loading.js';
-import saveCtFromCdiscLibrary from '../../utils/saveCtFromCdiscLibrary.js';
+import getCt from '../../utils/getCt.js';
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 import ItemView from './itemView.js';
 import { changePage } from '../../redux/slices/ui.js';
@@ -62,31 +60,7 @@ const CodeLists = (props) => {
         if (ct[productId] !== undefined) {
             return;
         }
-        // Check if CT is in cached data
-        const db = await openDB('ct-store', 1, {
-            upgrade (db) {
-                db.createObjectStore('controlledTerminology', {});
-            },
-        });
-
-        // Search for the response in cache
-        let loadedCt;
-        const response = await db.get('controlledTerminology', productId);
-        if (response !== undefined) {
-            const zippedData = response.data;
-            const zip = new Jszip();
-            await zip.loadAsync(zippedData);
-            if (Object.keys(zip.files).includes('ct.json')) {
-                loadedCt = JSON.parse(await zip.file('ct.json').async('string'));
-            }
-        } else {
-            const ctRaw = await cdiscLibrary.getFullProduct(productId);
-            loadedCt = await saveCtFromCdiscLibrary(ctRaw);
-        }
-        if (loadedCt?.study === undefined) {
-            // CT was not loaded
-            return;
-        }
+        const loadedCt = await getCt(productId, { cdiscLibrary });
 
         const mdv = loadedCt.study.metaDataVersion;
         dispatch(updateCt({
@@ -115,7 +89,7 @@ const CodeLists = (props) => {
             return;
         }
         setFilterString('');
-        dispatch(changePage({ page: 'codedValues', codeListId: codeList.oid }));
+        dispatch(changePage({ page: 'codedValues', codeListId: codeList.oid, label: codeList.cdiscSubmissionValue }));
     };
 
     const showCodeListDetails = (codeList) => (event) => {

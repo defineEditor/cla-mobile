@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Switch from '@material-ui/core/Switch';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import FormGroup from '@material-ui/core/FormGroup';
-import TextField from '@material-ui/core/TextField';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Button from '@material-ui/core/Button';
-import Visibility from '@material-ui/icons/Visibility';
-import VisibilityOff from '@material-ui/icons/VisibilityOff';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
 
 const useStyles = makeStyles((theme) => ({
     adorementIcon: {
@@ -30,20 +25,28 @@ const useStyles = makeStyles((theme) => ({
         width: 200,
         margin: theme.spacing(1)
     },
+    actionButtonGrid: {
+        display: 'flex',
+        justifyContent: 'center',
+    },
     actionButton: {
+        flex: '1 1 33',
+        marginTop: theme.spacing(1),
         marginRight: theme.spacing(3)
+    },
+    subTitle: {
+        marginTop: theme.spacing(2)
     },
 }));
 
-const Library = (props) => {
+const CtSettings = (props) => {
     const classes = useStyles();
-    const [showKey, setShowKey] = useState(false);
 
     return (
         <Grid container>
-            <Grid item xs={12}>
+            <Grid item xs={12} className={classes.subTitle}>
                 <Typography variant="h6" gutterBottom align="left" color='textSecondary'>
-                    CDISC Library
+                    Configuration
                 </Typography>
             </Grid>
             <Grid item xs={12}>
@@ -51,85 +54,48 @@ const Library = (props) => {
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={props.settings.cdiscLibrary.checkForCLUpdates}
-                                onChange={props.handleChange('cdiscLibrary', 'checkForCLUpdates')}
+                                checked={props.settings.cdiscLibrary.useNciSiteForCt}
+                                onChange={props.handleChange('cdiscLibrary', 'useNciSiteForCt')}
                                 color='primary'
-                                disabled={props.settings.cdiscLibrary.enableCdiscLibrary === false}
                                 className={classes.switch}
                             />
                         }
-                        label='Check for CDISC Library updates'
-                    />
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={props.settings.cdiscLibrary.oAuth2}
-                                onChange={props.handleChange('cdiscLibrary', 'oAuth2')}
-                                color='primary'
-                                disabled={props.settings.cdiscLibrary.enableCdiscLibrary === false}
-                                className={classes.switch}
-                            />
-                        }
-                        label='Use OAuth2 authentication'
+                        label='Use NCI site to download Controlled Terminology'
                     />
                 </FormGroup>
             </Grid>
-            <Grid item xs={12}>
-                <TextField
-                    label='API Key'
-                    disabled={!props.settings.cdiscLibrary.enableCdiscLibrary}
-                    value={props.settings.cdiscLibrary.apiKey}
-                    onChange={props.handleChange('cdiscLibrary', 'apiKey')}
-                    type={props.state.showEncryptedValue ? 'text' : 'password'}
-                    helperText='CDISC Library Primary API Key'
-                    className={classes.textFieldShort}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <IconButton
-                                    aria-label="Toggle apiKey visibility"
-                                    onClick={() => setShowKey(!showKey)}
-                                    className={classes.adorementIcon}
-                                >
-                                    {showKey ? <Visibility /> : <VisibilityOff />}
-                                </IconButton>
-                            </InputAdornment>
-                        )
-                    }}
-                />
-            </Grid>
-            <Grid item xs={12}>
-                <TextField
-                    label='Base URL'
-                    disabled={!props.settings.cdiscLibrary.enableCdiscLibrary}
-                    value={props.settings.cdiscLibrary.baseUrl}
-                    onChange={props.handleChange('cdiscLibrary', 'baseUrl')}
-                    helperText='CDISC Library API base URL'
-                    className={classes.textFieldShort}
-                />
-            </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} className={classes.actionButtonGrid}>
                 <Button
                     variant='contained'
                     color='default'
-                    disabled={!props.settings.cdiscLibrary.enableCdiscLibrary}
-                    onClick={props.checkCdiscLibraryConnection}
+                    onClick={props.cleanCtCache}
                     className={classes.actionButton}
                 >
-                    Check Connection
+                    Clean CT Cache
                 </Button>
-                <Button
-                    variant='contained'
-                    color='default'
-                    disabled={!props.settings.cdiscLibrary.enableCdiscLibrary}
-                    onClick={props.cleanCdiscLibraryCache}
-                    className={classes.actionButton}
-                >
-                    Clean Cache
-                </Button>
+            </Grid>
+            <Grid item xs={12} className={classes.subTitle}>
+                <Typography variant="h6" gutterBottom align="left" color='textSecondary'>
+                    Terminologies
+                </Typography>
+            </Grid>
+            <Grid item xs={12}>
+                <FormGroup>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={props.settings.controlledTerminology.showLessMore}
+                                onChange={props.handleChange('controlledTerminology', 'showLessMore')}
+                                color='primary'
+                                className={classes.switch}
+                            />
+                        }
+                        label='Show more/less buttons'
+                    />
+                </FormGroup>
             </Grid>
         </Grid>
     );
 };
 
-export default Library;
+export default CtSettings;

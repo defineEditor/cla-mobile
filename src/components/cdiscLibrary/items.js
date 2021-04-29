@@ -151,6 +151,7 @@ const Items = (props) => {
             return (
                 <ListItem
                     button
+                    disableGutters
                     key={item.name}
                     style={props.style}
                     disabled={item.type === 'headerGroup'}

@@ -16,6 +16,12 @@ const getStyles = makeStyles(theme => ({
         outline: 'none',
         flex: 1,
     },
+    code: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 1,
+        boxOrient: 'vertical',
+    },
     label: {
         overflow: 'hidden',
         display: 'box',
@@ -39,13 +45,14 @@ const CodedValues = (props) => {
         return (
             <ListItem
                 button
+                disableGutters
                 key={item.name}
                 style={props.style}
                 disabled={item.type === 'headerGroup'}
                 onClick={() => { setOpenedCodedValue(item); }}
             >
                 <ListItemText
-                    primary={item.codedValue}
+                    primary={<span className={classes.code}>{item.codedValue}</span>}
                     secondary={<span className={classes.label}>{item.decodes[0].value}</span>}
                 />
             </ListItem>

@@ -8,3 +8,5 @@ export const FilterContext = React.createContext({
 });
 
 export const CtContext = React.createContext({});
+
+export const MenuActionsContext = React.createContext({});

@@ -98,7 +98,15 @@ const Settings = (props) => {
 
     const cleanCdiscLibraryCache = () => {
         dispatch(openModal({
-            type: 'CLEAN_CDISC_LIBRARY_CACHE',
+            type: 'CLEAN_CACHE',
+            props: { cacheType: 'cdiscLibrary' },
+        }));
+    };
+
+    const cleanCtCache = () => {
+        dispatch(openModal({
+            type: 'CLEAN_CACHE',
+            props: { cacheType: 'controlledTerminology' },
         }));
     };
 
@@ -114,6 +122,7 @@ const Settings = (props) => {
             handleChange={handleChange}
             checkCdiscLibraryConnection={checkCdiscLibraryConnection}
             cleanCdiscLibraryCache={cleanCdiscLibraryCache}
+            cleanCtCache={cleanCtCache}
             save={save}
             cancel={cancel}
             settingsNotChanged={settingsNotChanged}

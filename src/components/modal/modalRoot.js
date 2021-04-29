@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import ModalGeneral from './modalGeneral.js';
-import ModalCleanCdiscLibraryCache from './modalCleanCdiscLibraryCache.js';
+import ModalCleanCache from './modalCleanCache.js';
 
 const MODAL_COMPONENTS = {
     GENERAL: ModalGeneral,
-    CLEAN_CDISC_LIBRARY_CACHE: ModalCleanCdiscLibraryCache,
+    CLEAN_CACHE: ModalCleanCache,
 };
 
 const ModalRoot = () => {

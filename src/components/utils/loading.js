@@ -38,6 +38,11 @@ const Loading = (props) => {
                 <Typography variant="body2" color='textSecondary'>
                     Use Settings to check connection to CDISC Library
                 </Typography>
+                {props.message !== undefined && (
+                    <Typography variant="body2" color='textSecondary'>
+                        {props.message}
+                    </Typography>
+                )}
             </Grid>
         </Grid>
     );
@@ -45,6 +50,7 @@ const Loading = (props) => {
 
 Loading.propTypes = {
     onRetry: PropTypes.func.isRequired,
+    message: PropTypes.string,
 };
 
 export default Loading;

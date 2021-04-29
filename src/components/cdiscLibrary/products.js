@@ -6,11 +6,13 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import Fab from '@material-ui/core/Fab';
 import Typography from '@material-ui/core/Typography';
+import Cached from '@material-ui/icons/Cached';
+import saveState from '../utils/saveState.js';
 import BottomBar from '../utils/bottombar.js';
 import Loading from '../utils/loading.js';
-import { CdiscLibraryContext, FilterContext } from '../../constants/contexts.js';
+import { CdiscLibraryContext, FilterContext, MenuActionsContext } from '../../constants/contexts.js';
 import { getProductTitle } from '../../utils/cdiscLibraryUtils.js';
-import { changePage } from '../../redux/slices/ui.js';
+import { changePage, openSnackbar } from '../../redux/slices/ui.js';
 import { openDB } from 'idb';
 
 const getStyles = makeStyles(theme => ({
@@ -72,16 +74,64 @@ const Products = () => {
     const dispatch = useDispatch();
     const cdiscLibrary = useContext(CdiscLibraryContext).cdiscLibrary;
     const { filterString, setFilterString } = useContext(FilterContext);
+    const { setMenuActions } = useContext(MenuActionsContext);
     const { productType, recentStandards, recentCt } = useSelector(state => state.present.ui.products);
+    const { showLessMore } = useSelector(state => state.present.settings.controlledTerminology);
     const classes = getStyles();
 
     const getProductClasses = useCallback(async () => {
-        setProductClasses(await cdiscLibrary.getProductClasses());
-    }, [cdiscLibrary]);
+        try {
+            let pc = await cdiscLibrary.getProductClasses();
+            if (cdiscLibrary.coreObject.useNciSiteForCt) {
+                // When NCI site is enabled, load the full list of CTs
+                await cdiscLibrary.getCtFromNciSite();
+                pc = await cdiscLibrary.getProductClasses();
+            }
+            setProductClasses(pc);
+        } catch (error) {
+            dispatch(openSnackbar({
+                type: 'error',
+                message: 'Error while loading products',
+            }));
+        }
+    }, [cdiscLibrary, dispatch]);
 
     useEffect(() => {
         getProductClasses();
     }, [getProductClasses]);
+
+    // Reload action for main menu
+    useEffect(() => {
+        const deepReloadProducts = async () => {
+            setProductClasses({});
+            const db = await openDB('cdiscLibrary-store', 1, {
+                upgrade (db) {
+                    // Create a store of objects
+                    db.createObjectStore('cdiscLibrary', {});
+                },
+            });
+
+            await db.delete('cdiscLibrary', 'products');
+            // Delete all nciSite keys
+            const allKeys = await db.getAllKeys('cdiscLibrary');
+            for (let i = 0; i < allKeys.length; i++) {
+                const key = allKeys[i];
+                if (key.startsWith('nciSite/')) {
+                    await db.delete('cdiscLibrary', key);
+                }
+            }
+
+            // Reset the library contents
+            cdiscLibrary.reset();
+            getProductClasses();
+        };
+
+        setMenuActions([{
+            position: 2,
+            action: { icon: <Cached />, name: 'Reload', onClick: deepReloadProducts }
+        }]);
+        return () => { setMenuActions([]); };
+    }, [cdiscLibrary, getProductClasses, setMenuActions]);
 
     const selectProduct = (productId, productName) => () => {
         setFilterString('');
@@ -90,10 +140,13 @@ const Products = () => {
         } else if (productType === 'terminology') {
             dispatch(changePage({ page: 'codeLists', productId, label: productName }));
         }
+        // Save state, so that recent update is not lost
+        saveState();
     };
 
     const getGroups = (data, classes) => {
         const result = Object.keys(data)
+            .sort()
             .filter(groupId => {
                 return Object.keys(data[groupId].products).some(productId => {
                     const title = data[groupId].products[productId].title;
@@ -135,7 +188,7 @@ const Products = () => {
 
     const getProducts = (data, groupId, classes) => {
         // Sort codelists
-        let dataArray = productType === 'standards' ? Object.keys(data) : Object.keys(data).reverse();
+        let dataArray = (productType === 'standards' || groupId === 'recent') ? Object.keys(data) : Object.keys(data).reverse();
         const buttonClass = groupId === 'recent' && productType === 'terminology' ? classes.smallTextButton : classes.button;
         // ADaM 2.1 is intentionally hidden as it is blank
         dataArray = dataArray.filter(id => id !== 'adam-2-1');
@@ -150,7 +203,7 @@ const Products = () => {
 
         // Limit the number of CTs shown
         let addMoreButton = false;
-        if (productType === 'terminology' && showAll[groupId] === undefined && dataArray.length > 6) {
+        if (showLessMore && productType === 'terminology' && showAll[groupId] !== true && dataArray.length > 6) {
             dataArray = dataArray.slice(0, 5);
             addMoreButton = true;
         }
@@ -172,7 +225,7 @@ const Products = () => {
                 );
             });
 
-        // Add showAll button
+        // Add More button
         if (addMoreButton) {
             result.push(
                 <Grid key='more' item className={classes.buttonGrid}>
@@ -183,6 +236,21 @@ const Products = () => {
                         className={buttonClass}
                     >
                         More
+                    </Fab>
+                </Grid>
+            );
+        }
+        // Add Less button
+        if (showLessMore && showAll[groupId] === true) {
+            result.push(
+                <Grid key='less' item className={classes.buttonGrid}>
+                    <Fab
+                        variant='extended'
+                        color='default'
+                        onClick={() => setShowAll({ ...showAll, [groupId]: false })}
+                        className={buttonClass}
+                    >
+                        Less
                     </Fab>
                 </Grid>
             );
@@ -239,7 +307,12 @@ const Products = () => {
                     const groups = {};
                     Object.keys(ctProducts).forEach(ctId => {
                         const ctProduct = ctProducts[ctId];
-                        const type = ctProduct.label.replace(/^(\S+).*/, '$1').toUpperCase();
+                        let type;
+                        if (ctProduct.label.includes('Glossary')) {
+                            type = 'GLOSSARY';
+                        } else {
+                            type = ctProduct.label.replace(/^(\S+).*/, '$1').toUpperCase();
+                        }
                         if (groups[type] === undefined) {
                             groups[type] = {
                                 title: type,
@@ -252,29 +325,32 @@ const Products = () => {
                     parsedData[classId].groups = groups;
                 });
         }
-        // Add recent products
-        const recent = {
-            title: 'Recent',
-            groups: { recent: { products: {}, title: '' } },
-        };
-        if (productType === 'standards') {
-            recentStandards.forEach(productId => {
-                recent.groups.recent.products[productId] = allProducts[productId];
-            });
-        } else {
-            recentCt.forEach(productId => {
-                let typeLabel = allProducts[productId].type;
-                if (typeLabel === 'DEFINE-XML') {
-                    typeLabel = 'DEF';
-                } else if (typeLabel === 'PROTOCOL') {
-                    typeLabel = 'PROT';
-                } else if (typeLabel === 'GLOSSARY') {
-                    typeLabel = 'GLOS';
-                }
-                recent.groups.recent.products[productId] = { title: typeLabel + '\n' + allProducts[productId].title };
-            });
+        // Add recent only if at least one product is avaialbe
+        if (Object.keys(parsedData).length > 0) {
+            // Add recent products
+            const recent = {
+                title: 'Recent',
+                groups: { recent: { products: {}, title: '' } },
+            };
+            if (productType === 'standards') {
+                recentStandards.forEach(productId => {
+                    recent.groups.recent.products[productId] = allProducts[productId];
+                });
+            } else {
+                recentCt.filter(productId => Object.keys(allProducts).includes(productId)).forEach(productId => {
+                    let typeLabel = allProducts[productId].type;
+                    if (typeLabel === 'DEFINE-XML') {
+                        typeLabel = 'DEF';
+                    } else if (typeLabel === 'PROTOCOL') {
+                        typeLabel = 'PROT';
+                    } else if (typeLabel === 'GLOSSARY') {
+                        typeLabel = 'GLOS';
+                    }
+                    recent.groups.recent.products[productId] = { title: typeLabel + '\n' + allProducts[productId].title };
+                });
+            }
+            parsedData = { recent, ...parsedData };
         }
-        parsedData = { recent, ...parsedData };
         const result = Object.keys(parsedData)
         // Show group only if at least one is present
             .filter(panelId => {
@@ -319,36 +395,20 @@ const Products = () => {
         return (result);
     };
 
-    const reloadProducts = async () => {
+    const lightReloadProducts = async () => {
         setProductClasses({});
-        const db = await openDB('cdiscLibrary-store', 1, {
-            upgrade (db) {
-                // Create a store of objects
-                db.createObjectStore('cdiscLibrary', {});
-            },
-        });
-
-        await db.delete('cdiscLibrary', 'products');
-        // Delete all root keys as they can be also updated
-        const allKeys = await db.getAllKeys('cdiscLibrary');
-        for (let i = 0; i < allKeys.length; i++) {
-            const key = allKeys[i];
-            if (key.startsWith('r/')) {
-                await db.delete('cdiscLibrary', key);
-            }
-        }
-
         // Reset the library contents
         cdiscLibrary.reset();
-
         getProductClasses();
     };
 
+    const notLoaded = Object.keys(productClasses).filter(classId => (classId !== 'terminology' && productType === 'standards') || (classId === 'terminology' && productType === 'terminology')).length === 0;
+
     return (
         <React.Fragment>
-            <Grid container spacing={1} justify='space-between' className={classes.main}>
+            <Grid container justify='space-between' className={classes.main}>
                 <Grid item xs={12}>
-                    { Object.keys(productClasses).length === 0 ? (<Loading onRetry={reloadProducts} />) : getClasses(productClasses, classes) }
+                    { notLoaded ? (<Loading onRetry={lightReloadProducts} message='API key is required to access CDISC Library API' />) : getClasses(productClasses, classes) }
                 </Grid>
             </Grid>
             <BottomBar />

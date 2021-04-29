@@ -1,7 +1,7 @@
 {
   "name": "cla-mobile",
   "homepage": "https://defineeditor.com/mobileBrowser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "start": "HTTPS=true BROWSER=none SSL_CRT_FILE=cert/localhost.pem SSL_KEY_FILE=cert/localhost-key.pem react-scripts start",

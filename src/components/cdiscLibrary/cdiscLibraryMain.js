@@ -22,7 +22,14 @@ const getStylesMain = makeStyles(theme => ({
     },
     root: {
         backgroundColor: 'rgb(146 149 162 / 10%)',
-    }
+    },
+    fallBack: {
+        backgroundColor: 'rgb(146 149 162 / 10%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+    },
 }));
 
 const CdiscLibraryMain = (props) => {
@@ -44,7 +51,7 @@ const CdiscLibraryMain = (props) => {
 
     return (
         <div className={classes.root}>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div className={classes.fallBack}><h3>Loading...</h3></div>}>
                 <AppBar page={page}/>
                 {snackbarOpened && <SnackbarRoot />}
                 <ModalRoot />

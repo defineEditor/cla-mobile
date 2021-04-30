@@ -60,7 +60,7 @@ const Items = (props) => {
     const itemType = useSelector(state => state.present.ui.items.itemType);
     const itemGroupId = useSelector(state => state.present.ui.items.itemGroupId);
     const showSubheader = useSelector(state => state.present.settings.cdiscLibrary.itemsShowSetSubheader);
-    const filterString = useContext(FilterContext).filterString;
+    const { filterString, setFilterString } = useContext(FilterContext);
     const classes = getStyles();
 
     const getItems = useCallback(async () => {
@@ -202,7 +202,12 @@ const Items = (props) => {
                 onOpen={openItemView}
                 onClose={closeItemView}
             >
-                <ItemView item={openedItem} type={data?.product?.model === 'CDASH' ? 'field' : 'variable'}/>
+                <ItemView
+                    item={openedItem}
+                    type={data?.product?.model === 'CDASH' ? 'field' : 'variable'}
+                    cdiscLibrary={cdiscLibrary}
+                    setFilterString={setFilterString}
+                />
             </SwipeableDrawer>
             <div className={classes.main}>
                 { data.product === null ? (<Loading onRetry={getItems} />) : (showList()) }

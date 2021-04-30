@@ -5,12 +5,25 @@ export const uiMainSlice = createSlice({
     name: 'ui',
     initialState: initialUi,
     reducers: {
+        openCodeList: (state, action) => {
+            const newState = { ...state };
+            const payload = action.payload;
+            newState.main = { ...newState.main, page: 'codedValues', backPage: payload.backPage ?? '' };
+            newState.codeLists = { ...state.codeLists, productId: payload.productId, label: '' };
+            newState.codedValues = { ...state.codedValues, alias: payload.alias, label: '', codeListId: '' };
+            return newState;
+        },
         changePage: (state, action) => {
             const payload = { ...action.payload };
             const newPage = payload.page;
+            const oldPage = state.main.page;
             delete payload.page;
-            state.main.page = newPage;
+            state.main = { ...state.main, page: newPage };
             state[newPage] = { ...state[newPage], ...action.payload };
+            // In case of settings, set backPage to the previous page
+            if (newPage === 'settings') {
+                state.main = { ...state.main, backPage: oldPage };
+            }
             // Update recent products
             if (newPage === 'itemGroups' || newPage === 'codeLists') {
                 const recentName = newPage === 'itemGroups' ? 'recentStandards' : 'recentCt';
@@ -30,22 +43,28 @@ export const uiMainSlice = createSlice({
         changeBack: (state) => {
             const page = state.main.page;
             const newState = { ...state, main: { ...state.main } };
-            if (page !== 'products') {
-                // Add dummy history, so that back button does not exit the application
+            if (newState.main.backPage !== '') {
+                newState.main.page = newState.main.backPage;
+                newState.main.backPage = '';
                 window.history.pushState({}, '');
-            }
-            if ((page) === 'items') {
-                newState.main.page = 'itemGroups';
-            } else if (page === 'codedValues') {
-                newState.main.page = 'codeLists';
-            } else if (page === 'itemGroups' || page === 'codeLists') {
-                newState.main.page = 'products';
             } else {
-                newState.main.page = 'products';
-            }
-            if (newState.main.page === 'products') {
-                // Clean history so that user can exit app using back button
-                window.history.go(-window.history.length);
+                if (page !== 'products') {
+                    // Add dummy history, so that back button does not exit the application
+                    window.history.pushState({}, '');
+                }
+                if ((page) === 'items') {
+                    newState.main.page = 'itemGroups';
+                } else if (page === 'codedValues') {
+                    newState.main.page = 'codeLists';
+                } else if (page === 'itemGroups' || page === 'codeLists') {
+                    newState.main.page = 'products';
+                } else {
+                    newState.main.page = 'products';
+                }
+                if (newState.main.page === 'products') {
+                    // Clean history so that user can exit app using back button
+                    window.history.go(-window.history.length);
+                }
             }
             return newState;
         },
@@ -119,6 +138,7 @@ export const {
     closeModal,
     changeProductType,
     updateFilterStringHistory,
+    openCodeList,
 } = uiMainSlice.actions;
 
 export default uiMainSlice.reducer;

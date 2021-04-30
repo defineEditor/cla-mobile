@@ -1,5 +1,6 @@
 const uiMain = {
     page: 'products',
+    backPage: '',
     filterStringHistory: {},
     version: '',
 };
@@ -22,6 +23,17 @@ const uiItems = {
     itemType: '',
 };
 
+const uiCodeLists = {
+    productId: '',
+    label: '',
+};
+
+const uiCodedValues = {
+    codeListId: '',
+    alias: '',
+    label: '',
+};
+
 const uiSnackbar = {
     type: null,
     message: undefined,
@@ -38,6 +50,8 @@ export const ui = {
     products: uiProducts,
     itemGroups: uiItemGroups,
     items: uiItems,
+    codeLists: uiCodeLists,
+    codedValues: uiCodedValues,
     snackbar: uiSnackbar,
     modal: uiModal,
 };

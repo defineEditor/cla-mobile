@@ -293,11 +293,13 @@ const ItemGroups = (props) => {
         );
     };
 
+    const notLoaded = data.product === null || data.itemGroups.length === 0;
+
     return (
         <React.Fragment>
             <Grid container justify='flex-start' direction='column' wrap='nowrap' className={classes.main}>
                 <Grid item>
-                    { data.product === null ? (<Loading onRetry={getItemGroups} />) : (gridView ? showGrid() : showList()) }
+                    { notLoaded ? (<Loading onRetry={getItemGroups} />) : (gridView ? showGrid() : showList()) }
                 </Grid>
             </Grid>
             <SwipeableDrawer

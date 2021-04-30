@@ -1,13 +1,16 @@
-import React, { useState, useContext } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { makeStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
+import getCt from '../../utils/getCt.js';
+import Loading from '../utils/loading.js';
 import ItemView from './itemView.js';
-import { FilterContext, CtContext } from '../../constants/contexts.js';
+import { FilterContext, CtContext, CdiscLibraryContext } from '../../constants/contexts.js';
+import { updateCt } from '../../redux/slices/ct.js';
 
 const getStyles = makeStyles(theme => ({
     main: {
@@ -31,13 +34,47 @@ const getStyles = makeStyles(theme => ({
 }));
 
 const CodedValues = (props) => {
+    const dispatch = useDispatch();
     const [openedCodedValue, setOpenedCodedValue] = useState(null);
+    const [codeList, setCodeList] = useState(null);
     const productId = useSelector(state => state.present.ui.codeLists.productId);
-    const codeListId = useSelector(state => state.present.ui.codedValues.codeListId);
+    const codedValuesUi = useSelector(state => state.present.ui.codedValues);
     const filterString = useContext(FilterContext).filterString;
-    const { ct } = useContext(CtContext);
-    const codeList = ct[productId].study.metaDataVersion.codeLists[codeListId];
+    const cdiscLibrary = useContext(CdiscLibraryContext).cdiscLibrary;
+    const { ct, setCt } = useContext(CtContext);
     const classes = getStyles();
+
+    const getCodeList = useCallback(async () => {
+        // Check if CT is alreaded loaded
+        if (ct[productId] === undefined) {
+            const loadedCt = await getCt(productId, { cdiscLibrary });
+
+            const mdv = loadedCt.study.metaDataVersion;
+            dispatch(updateCt({
+                ct: {
+                    codeListNum: Object.keys(mdv.codeLists).length,
+                },
+                productId,
+            }));
+            setCt({ [productId]: loadedCt });
+            // No need to set codelist here as after CT update the component will be rerendered
+        } else {
+            if (ct[productId]?.study?.metaDataVersion) {
+                let { codeListId, alias } = codedValuesUi;
+                // In case only alias was provided, find codelist OID first
+                if (!codeListId && alias) {
+                    codeListId = ct[productId].study.metaDataVersion.nciCodeOids[alias];
+                }
+                if (ct[productId]?.study?.metaDataVersion?.codeLists[codeListId]) {
+                    setCodeList(ct[productId].study.metaDataVersion.codeLists[codeListId]);
+                }
+            }
+        }
+    }, [cdiscLibrary, productId, dispatch, ct, setCt, setCodeList, codedValuesUi]);
+
+    useEffect(() => {
+        getCodeList();
+    }, [getCodeList]);
 
     const renderRow = (props) => {
         const item = props.data[props.index];
@@ -98,7 +135,7 @@ const CodedValues = (props) => {
                 <ItemView item={openedCodedValue} type='codedValue'/>
             </SwipeableDrawer>
             <div className={classes.main}>
-                {showList()}
+                {codeList === null ? (<Loading onRetry={getCodeList} />) : showList()}
             </div>
         </React.Fragment>
     );

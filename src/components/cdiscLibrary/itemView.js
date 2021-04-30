@@ -6,9 +6,9 @@ import Grid from '@material-ui/core/Grid';
 import ButtonBase from '@material-ui/core/ButtonBase';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
-import Copy from '@material-ui/icons/FileCopyOutlined';
+import Copy from '@material-ui/icons/NoteOutlined';
 import { getDecode, getDescription } from '../../utils/cdiscLibraryUtils.js';
-import { openSnackbar } from '../../redux/slices/ui.js';
+import { openSnackbar, openCodeList } from '../../redux/slices/ui.js';
 
 const getStyles = makeStyles(theme => ({
     root: {
@@ -58,6 +58,7 @@ const getStyles = makeStyles(theme => ({
         transform: 'translate(0, -3px)',
     },
     copyIcon: {
+        transform: 'rotate(-90deg)',
         height: 20,
     },
 }));
@@ -103,6 +104,24 @@ const ItemView = (props) => {
                 duration: 1000,
             }
         }));
+    };
+
+    const openItemCodeList = async (event) => {
+        // Get product ID from href
+        // Model name
+        const model = item.codelistHref.replace(/\/mdr\/root\/ct\/(.*?)\/.*/, '$1');
+        // Find the latest CT for this model
+        const allProducts = await props.cdiscLibrary.getProductList();
+        const productId = allProducts.filter(name => name.includes(model)).sort().reverse()[0];
+
+        if (productId !== undefined) {
+            props.setFilterString('');
+            dispatch(openCodeList({
+                productId,
+                backPage: 'items',
+                alias: item.codelist,
+            }));
+        }
     };
 
     const FieldView = () => {
@@ -159,9 +178,9 @@ const ItemView = (props) => {
                         copyToClipboard={copyToClipboard}
                     />
                     <Grid item container justify='space-evenly'>
-                        <ElementView label='Type' value={item.simpleDatatype} classes={classes} copyToClipboard={copyToClipboard}/>
+                        <ElementView label='Type' value={item.simpleDatatype} classes={classes}/>
                         {item.core && (
-                            <ElementView label='Core' value={item.core} classes={classes} copyToClipboard={copyToClipboard}/>
+                            <ElementView label='Core' value={item.core} classes={classes}/>
                         )}
 
                     </Grid>
@@ -189,6 +208,7 @@ const ItemView = (props) => {
                         <Button
                             className={classes.codelistButton}
                             variant='contained'
+                            onClick={openItemCodeList}
                         >
                             {item.codelist}
                         </Button>

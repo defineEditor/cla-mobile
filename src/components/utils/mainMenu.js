@@ -75,11 +75,14 @@ const MainMenu = (props) => {
     const actions = [
         { icon: <HomeIcon />, name: 'Home', onClick: goHome },
         { icon: <Settings />, name: 'Settings', onClick: goSettings },
-        { icon: <SaveIcon />, name: 'Save', onClick: save },
         { icon: <ChevronRight />, name: 'Redo', onClick: redo, disabled: futureLength === 0 },
         { icon: <ChevronLeft />, name: 'Undo', onClick: undo, disabled: pastLength === 0 },
         { icon: <HelpOutline />, name: 'About', onClick: goAbout },
     ];
+
+    if (process.env.NODE_ENV !== 'production') {
+        actions.splice(2, 0, { icon: <SaveIcon />, name: 'Save', onClick: save });
+    }
 
     if (menuActions.length > 0) {
         menuActions.forEach(menuAction => {

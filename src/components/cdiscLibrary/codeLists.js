@@ -32,6 +32,13 @@ const getStyles = makeStyles(theme => ({
         lineClamp: 2,
         boxOrient: 'vertical',
     },
+    buttonText: {
+        overflow: 'hidden',
+        display: 'box',
+        lineClamp: 1,
+        boxOrient: 'vertical',
+        textAlign: 'left'
+    },
     codeListButton: {
         color: theme.palette.primary.main,
         padding: 0,
@@ -120,7 +127,9 @@ const CodeLists = (props) => {
                             onClick={showCodeListDetails(codeList)}
                             className={classes.codeListButton}
                         >
-                            {codeList.cdiscSubmissionValue}
+                            <div className={classes.buttonText}>
+                                {codeList.cdiscSubmissionValue}
+                            </div>
                         </ButtonBase>
                     }
                     secondary={<span className={classes.groupDescription}>{codeList.preferredTerm}</span>}
